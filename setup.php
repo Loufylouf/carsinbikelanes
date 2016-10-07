@@ -5,16 +5,21 @@ require 'admin/config_write.php';
 
 //VALUES PASSED FROM SETUP FORM
 $config = array(
-'sqlhost' => $_POST["sqlhost"],
-'sqluser' => $_POST["sqluser"],
-'sqlpass' => $_POST["sqlpass"],
-'database' => $_POST["database"]
+   'sqlhost' => $_POST["sqlhost"],
+   'sqluser' => $_POST["sqluser"],
+   'sqlpass' => $_POST["sqlpass"],
+   'database' => $_POST["database"]
 );
+
 $username = $_POST["username"];
 $password1 = $_POST["password1"];
 $password2 = $_POST["password2"];
+
 $email = (filter_var($_POST['email'], FILTER_SANITIZE_EMAIL) ? $_POST['email'] : '');
-if ($email != $_POST['email']){ return_error('Invalid email address.'); }
+if ($email != $_POST['email'])
+{ 
+   return_error('Invalid email address.'); 
+}
 $submit_notify = ($email != '' ? TRUE : FALSE);
 $config_folder = $_POST["config_folder"];
 
@@ -22,25 +27,34 @@ $progress = "";
 
 //CHECK THAT PASSWORDS WERE CORRECTLY TYPED
 $password = "";
-if ($password1 !== $password2){
+if ($password1 !== $password2)
+{
 	return_error("Passwords entered do not match.");
 }
-else { $password = $password1; }
+else 
+{ 
+   $password = $password1; 
+}
 
 //CREATE MYSQL CONNECTION
 $connection = new mysqli($config['sqlhost'], $config['sqluser'], $config['sqlpass']);
-if ($connection->connect_error) {
+if ($connection->connect_error) 
+{
 	return_error("MySQL connection failed: " . $connection->connect_error);
 } 
 
 //CREATE MYSQL DATABASE
 $query = "CREATE DATABASE IF NOT EXISTS " . $config['database'] . " CHARACTER SET utf8 COLLATE utf8_general_ci;";
-if ($connection->query($query) === TRUE) {
+if ($connection->query($query) === TRUE) 
+{
 	$query = "USE " . $config['database'];
-	if ($connection->query($query) === TRUE) {
+	if ($connection->query($query) === TRUE) 
+   {
 		$progress .= "Database " . $config['database'] . " set up successfully.<br>";
 	}
-} else {
+} 
+else 
+{
 	return_error("MySQL connection successful but error setting up database: " . $connection->error);
 }
 
@@ -58,9 +72,13 @@ street1 text NOT NULL,
 street2 text NOT NULL,
 description text NOT NULL
 )";
-if ($connection->query($query) === TRUE) {
+
+if ($connection->query($query) === TRUE) 
+{
     $progress .= "Records table populated successfully.<br>";
-} else {
+} 
+else 
+{
 	return_error("MySQL error populating database: " . $connection->error);
 }
 
@@ -78,9 +96,12 @@ street1 text NOT NULL,
 street2 text NOT NULL,
 description text NOT NULL
 )";
-if ($connection->query($query) === TRUE) {
+if ($connection->query($query) === TRUE) 
+{
     $progress .= "Submission queue table populated successfully.<br>";
-} else {
+} 
+else 
+{
 	return_error("MySQL error populating database: " . $connection->error);
 }
 
@@ -92,9 +113,12 @@ admin BOOLEAN NOT NULL,
 submit_notify BOOLEAN NOT NULL,
 email CHAR(255)
 )";
-if ($connection->query($query) === TRUE) {
+if ($connection->query($query) === TRUE) 
+{
     $progress .= "Logins table populated successfully.<br>";
-} else {
+} 
+else 
+{
 	return_error("MySQL error populating database: " . $connection->error);
 }
 
@@ -114,15 +138,18 @@ $connection->close();
 $path_parts = explode('/', $config_folder);
 array_pop($path_parts);
 $config_parent = implode('/', $path_parts);
-if (!file_exists($config_parent)){
+if (!file_exists($config_parent))
+{
 	return_error("Config folder path not valid");
 }
-if (file_exists($config_folder)){
+if (file_exists($config_folder))
+{
 	return_error("Configuration folder already exists at specified location.");
 }
 
 //MOVE AND RENAME CONFIG FOLDER
-if (!rename('config', $config_folder)){
+if (!rename('config', $config_folder))
+{
 	return_error("Problem setting up configuration folder.");
 }
 
@@ -150,7 +177,8 @@ $progress .= "<script>location.href = 'index.php?setup_success_dialog=true';</sc
 
 echo $progress;
 
-function return_error($error){
+function return_error($error)
+{
 	error_log($error);
 	$error_parsed = rawurlencode($error);
 	$url = 'Location: index.php?error=' . $error_parsed;
