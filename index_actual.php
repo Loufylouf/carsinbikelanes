@@ -322,7 +322,7 @@ function submitForm(e) {
 	formData.append( 'upload','true' );
 	formData.append( 'source','desktop' );
 	$.ajax({
-	  url: '/submission.php',
+	  url: 'submission.php',
 	  type: 'POST',
 	  data: formData,
 	  processData: false,
