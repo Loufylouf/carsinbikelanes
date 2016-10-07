@@ -19,14 +19,13 @@ if (isset($_POST['update_database'])){ update_database(); }
 function update_password($connection) {
 	$oldpass = $_POST['oldpass'];
 	$current_user = $_SESSION['username'];
-	$hasher = new PasswordHash(8, false);
 	$query = 'SELECT hash FROM cibl_users WHERE username=\'' . $current_user . '\' LIMIT 1';
 	$result = "";
 	try { $result = mysqli_query($connection,$query); }
 	catch (Exception $e){ die("Error: User does not exist"); }
 	$row = mysqli_fetch_assoc($result);
 	$hash = $row['hash'];
-	$check = $hasher->CheckPassword($oldpass, $hash);
+	$check = crypt($oldpass, '$6$rounds=20000$'.$config["salt"].'$') == $hash ;
 	if ($check) {
 		$newpass1 = $_POST["newpass1"];
 		$newpass2 = $_POST["newpass2"];
@@ -91,8 +90,7 @@ function new_user($connection, $config) {
 	}
 	else {
 		$password = $newpass1;
-		$hasher = new PasswordHash(8, false);
-		$hash = $hasher->HashPassword($password);
+		$hash = crypt($password, '$6$rounds=20000$'.$config["salt"].'$') ;
 		$query = "INSERT INTO cibl_users VALUES ('" . $newusername . "', '" . $hash . "', FALSE, " . $submit_notify . ", '" . $email . "');";
 		if ($connection->query($query) === TRUE) {
 			$email_op = 'new_user';

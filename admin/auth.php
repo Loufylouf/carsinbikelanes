@@ -1,6 +1,5 @@
 <?php
 
-require '../scripts/PasswordHash.php';
 require 'config_pointer.php';
 
 session_start();
@@ -8,7 +7,6 @@ session_start();
 if (!isset($_SESSION['login']) && isset($_POST['username']) && isset($_POST['password'])){	
 	$username = $_POST['username'];
 	$password = $_POST['password'];
-	$hasher = new PasswordHash(8, false);
 	$query = 'SELECT * FROM cibl_users WHERE username=\'' . $username . '\' LIMIT 1';
 	$result = "";
 	try { $result = mysqli_query($connection,$query); }
@@ -16,7 +14,7 @@ if (!isset($_SESSION['login']) && isset($_POST['username']) && isset($_POST['pas
 	$row = mysqli_fetch_assoc($result);
 	$hash = $row['hash'];
 	$admin = $row['admin'];
-	$check = $hasher->CheckPassword($password, $hash);
+	$check = crypt($password, '$6$rounds=20000$'.$config["salt"].'$') == $hash ;
 	if ($check) {
 		$_SESSION['login'] = true;
 		$_SESSION['username'] = $username;

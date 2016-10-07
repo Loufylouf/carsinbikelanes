@@ -1,19 +1,28 @@
 <?php
 
-require 'scripts/PasswordHash.php';
 require 'admin/config_write.php';
+
+// Create a salt that will be saved using some random data
+mt_srand() ; 
+$salt = base64_encode( "".mt_rand(mt_getrandmax()/10, mt_getrandmax())."".mt_rand(mt_getrandmax()/10, mt_getrandmax()) ) ;
+$salt = substr($salt, 0, 16) ; 
+
+if ( empty($_POST["password1"]) /*|| empty($_POST["password2"]) || $_POST["password1"] != $_POST["password2"]*/ )
+   $error .= "Passwords entered do not match or are not filled.\n" ;
+else
+   $hash = crypt($_POST["password1"], '$6$rounds=20000$'.$salt.'$') ;
+
 
 //VALUES PASSED FROM SETUP FORM
 $config = array(
    'sqlhost' => $_POST["sqlhost"],
    'sqluser' => $_POST["sqluser"],
    'sqlpass' => $_POST["sqlpass"],
-   'database' => $_POST["database"]
+   'database' => $_POST["database"],
+   'salt' => $salt 
 );
 
 $username = $_POST["username"];
-$password1 = $_POST["password1"];
-$password2 = $_POST["password2"];
 
 $email = (filter_var($_POST['email'], FILTER_SANITIZE_EMAIL) ? $_POST['email'] : '');
 if ($email != $_POST['email'])
@@ -25,16 +34,6 @@ $config_folder = $_POST["config_folder"];
 
 $progress = "";
 
-//CHECK THAT PASSWORDS WERE CORRECTLY TYPED
-$password = "";
-if ($password1 !== $password2)
-{
-	return_error("Passwords entered do not match.");
-}
-else 
-{ 
-   $password = $password1; 
-}
 
 //CREATE MYSQL CONNECTION
 $connection = new mysqli($config['sqlhost'], $config['sqluser'], $config['sqlpass']);
@@ -123,8 +122,6 @@ else
 }
 
 //SAVE ADMIN CREDENTIALS
-$hasher = new PasswordHash(8, false);
-$hash = $hasher->HashPassword($password);
 $query = "INSERT INTO cibl_users VALUES ('" . $username . "', '" . $hash . "', TRUE, " . $submit_notify . ", '" . $email . "');";
 if ($connection->query($query) === TRUE) {
     $progress .= "Admin credentials saved.<br>";

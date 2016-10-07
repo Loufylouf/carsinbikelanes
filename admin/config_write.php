@@ -14,6 +14,7 @@ function config_write($new_config){
 		"google_api_key" => "",
 		"google_extra_layer" => "NONE",
 		"use_bing" => 0,
+		"salt" => '', 
 		"bing_api_key" => "",
 		"bing_imagery" => 'Road',
 		"max_view" => 50,
@@ -53,6 +54,7 @@ function config_write($new_config){
 	"'sqluser' => '" . $new_config['sqluser'] . "',\n" .
 	"'sqlpass' => '" . $new_config['sqlpass'] . "',\n" .
 	"'database' => '" . $new_config['database'] . "',\n" .
+	"'salt' => '" . $new_config['salt'] . "',\n" .
 	"'use_providers_plugin' => " . $new_config['use_providers_plugin'] . ",\n" .
 	"'leaflet_provider' => '" . $new_config['leaflet_provider'] . "',\n" .
 	"'map_url' => '" . $new_config['map_url'] . "',\n" .
