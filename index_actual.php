@@ -268,7 +268,12 @@ function fillExifFields(e) {
 			var lng_min = EXIF.getTag(this, "GPSLongitude")[1];
 			var lng_sec = EXIF.getTag(this, "GPSLongitude")[2];
 			var gps_lat = (lat_deg+(((lat_min*60)+lat_sec))/3600); //DMS to decimal
-			var gps_lng = -(lng_deg+(((lng_min*60)+lng_sec))/3600); //DMS to decimal
+			var gps_lng = (lng_deg+(((lng_min*60)+lng_sec))/3600); //DMS to decimal
+			if ( EXIF.getTag(this, "GPSLatitudeRef") == 'S' )
+				gps_lat *= -1 ;
+			if ( EXIF.getTag(this, "GPSLongitudeRef") == 'W' )
+				gps_lng *= -1 ;
+
 			document.getElementById("latitude").value = gps_lat;
 			document.getElementById("longitude").value = gps_lng;
 			fill_streets();
