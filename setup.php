@@ -7,129 +7,100 @@ mt_srand() ;
 $salt = base64_encode( "".mt_rand(mt_getrandmax()/10, mt_getrandmax())."".mt_rand(mt_getrandmax()/10, mt_getrandmax()) ) ;
 $salt = substr($salt, 0, 16) ; 
 
+
+// Input data validation
+$error = '' ; 
+$submit_notify = false ; 
+
+if ( !empty($_POST["email"]) && !filter_var($_POST['email'], FILTER_SANITIZE_EMAIL) )
+   $error .= "Invalid email address.\n" ;
+else
+{
+   $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL) ? $_POST['email'] : '' ;
+   $submit_notify = true ; 
+}
+
 if ( empty($_POST["password1"]) /*|| empty($_POST["password2"]) || $_POST["password1"] != $_POST["password2"]*/ )
    $error .= "Passwords entered do not match or are not filled.\n" ;
 else
    $hash = crypt($_POST["password1"], '$6$rounds=20000$'.$salt.'$') ;
 
+// Make sure no error was present in the user data verification
+if ( !empty($error) )
+   return_error('Invalid email address.'); 
 
-//VALUES PASSED FROM SETUP FORM
+
+// There's no way to verify at this point that the SQL parameters are correct.
+// Simply trim the data in case a whitespace has slipped through
 $config = array(
-   'sqlhost' => $_POST["sqlhost"],
-   'sqluser' => $_POST["sqluser"],
-   'sqlpass' => $_POST["sqlpass"],
-   'database' => $_POST["database"],
-   'salt' => $salt 
+   'sqlhost'  => trim($_POST["sqlhost"]),
+   'sqluser'  => trim($_POST["sqluser"]),
+   'sqlpass'  => $_POST["sqlpass"],
+   'database' => trim($_POST["database"]),
+   'salt'     => $salt 
 );
 
 $username = $_POST["username"];
-
-$email = (filter_var($_POST['email'], FILTER_SANITIZE_EMAIL) ? $_POST['email'] : '');
-if ($email != $_POST['email'])
-{ 
-   return_error('Invalid email address.'); 
-}
-$submit_notify = ($email != '' ? TRUE : FALSE);
 $config_folder = $_POST["config_folder"];
 
-$progress = "";
+// SQL queries to be executed. 
+$queries = array( 
+   array(
+      "query"   => "CREATE DATABASE IF NOT EXISTS " . $config['database'] . " CHARACTER SET utf8 COLLATE utf8_general_ci;", 
+      "error"   => "MySQL connection successful but error setting up database : "),
+   array(
+      "query"   => "USE " . $config['database'],
+      "success" => "Database " . $config['database'] . " set up successfully.",
+      "error"   => "Unable to set the database to use : "),
+   array(
+      "query"   => "DROP  TABLE IF EXISTS cibl_data ;"),
+   array(
+      "query"   => "CREATE TABLE cibl_data ( increment int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY, url text NOT NULL, plate text NOT NULL, state tinytext NOT NULL, date_occurrence timestamp DEFAULT '0000-00-00 00:00:00', date_added timestamp DEFAULT CURRENT_TIMESTAMP, gps_lat float(10,6) NOT NULL, gps_long float(10,6) NOT NULL, street1 text NOT NULL, street2 text NOT NULL, description text NOT NULL ) ; ",
+      "success" => "Records table populated successfully.",
+      "error"   => "MySQL error populating database : "),
+   array(
+      "query"   => "DROP  TABLE IF EXISTS cibl_queue ;"),
+   array(
+      "query"   => "CREATE TABLE cibl_queue ( increment int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY, url text NOT NULL, plate text NOT NULL, state tinytext NOT NULL, date_occurrence timestamp DEFAULT '0000-00-00 00:00:00', date_added timestamp DEFAULT CURRENT_TIMESTAMP, gps_lat float(10,6) NOT NULL, gps_long float(10,6) NOT NULL, street1 text NOT NULL, street2 text NOT NULL, description text NOT NULL ) ; ",
+      "success" => "Submission queue table populated successfully.",
+      "error"   => "MySQL error populating database : "),
+   array(
+      "query"   => "DROP  TABLE IF EXISTS cibl_users ;"),
+   array(
+      "query"   => "CREATE TABLE cibl_users ( username CHAR(30) NOT NULL, hash CHAR(60) NOT NULL, admin BOOLEAN NOT NULL, submit_notify BOOLEAN NOT NULL, email CHAR(255) ) ; ",
+      "success" => "Logins table populated successfully.",
+      "error"   => "MySQL error populating database : "),
+   array(
+      "query"   => "INSERT INTO cibl_users VALUES ('" . $username . "', '" . $hash . "', TRUE, " . $submit_notify . ", '" . $email . "'); ",
+      "success" => "Admin credentials saved.",
+      "error"   => "MySQL error saving admin credentials : ")
+ ) ;
 
 
-//CREATE MYSQL CONNECTION
+// Open the MySQL connection
 $connection = new mysqli($config['sqlhost'], $config['sqluser'], $config['sqlpass']);
 if ($connection->connect_error) 
 {
 	return_error("MySQL connection failed: " . $connection->connect_error);
 } 
 
-//CREATE MYSQL DATABASE
-$query = "CREATE DATABASE IF NOT EXISTS " . $config['database'] . " CHARACTER SET utf8 COLLATE utf8_general_ci;";
-if ($connection->query($query) === TRUE) 
+// Execute all queries specified above
+$progress = "" ;
+foreach ( $queries as $query )
 {
-	$query = "USE " . $config['database'];
-	if ($connection->query($query) === TRUE) 
+   $resultQuery = $connection->query($query["query"]) ; 
+   if ( $resultQuery === TRUE && !empty($query["success"]) ) 
    {
-		$progress .= "Database " . $config['database'] . " set up successfully.<br>";
-	}
-} 
-else 
-{
-	return_error("MySQL connection successful but error setting up database: " . $connection->error);
-}
-
-//CREATE MYSQL RECORDS TABLE
-$query = "CREATE TABLE cibl_data (
-increment int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-url text NOT NULL,
-plate text NOT NULL,
-state tinytext NOT NULL,
-date_occurrence timestamp DEFAULT '0000-00-00 00:00:00',
-date_added timestamp DEFAULT CURRENT_TIMESTAMP,
-gps_lat float(10,6) NOT NULL,
-gps_long float(10,6) NOT NULL,
-street1 text NOT NULL,
-street2 text NOT NULL,
-description text NOT NULL
-)";
-
-if ($connection->query($query) === TRUE) 
-{
-    $progress .= "Records table populated successfully.<br>";
-} 
-else 
-{
-	return_error("MySQL error populating database: " . $connection->error);
-}
-
-//CREATE SUBMISSION QUEUE TABLE
-$query = "CREATE TABLE cibl_queue (
-increment int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-url text NOT NULL,
-plate text NOT NULL,
-state tinytext NOT NULL,
-date_occurrence timestamp DEFAULT '0000-00-00 00:00:00',
-date_added timestamp DEFAULT CURRENT_TIMESTAMP,
-gps_lat float(10,6) NOT NULL,
-gps_long float(10,6) NOT NULL,
-street1 text NOT NULL,
-street2 text NOT NULL,
-description text NOT NULL
-)";
-if ($connection->query($query) === TRUE) 
-{
-    $progress .= "Submission queue table populated successfully.<br>";
-} 
-else 
-{
-	return_error("MySQL error populating database: " . $connection->error);
-}
-
-//CREATE MYSQL LOGINS TABLE
-$query = "CREATE TABLE cibl_users (
-username CHAR(30) NOT NULL,
-hash CHAR(60) NOT NULL,
-admin BOOLEAN NOT NULL,
-submit_notify BOOLEAN NOT NULL,
-email CHAR(255)
-)";
-if ($connection->query($query) === TRUE) 
-{
-    $progress .= "Logins table populated successfully.<br>";
-} 
-else 
-{
-	return_error("MySQL error populating database: " . $connection->error);
-}
-
-//SAVE ADMIN CREDENTIALS
-$query = "INSERT INTO cibl_users VALUES ('" . $username . "', '" . $hash . "', TRUE, " . $submit_notify . ", '" . $email . "');";
-if ($connection->query($query) === TRUE) {
-    $progress .= "Admin credentials saved.<br>";
-} else {
-	return_error("MySQL error saving admin credentials: " . $connection->error);
+      $progress .= $query["success"]."<br>";
+   } 
+   else if ( $resultQuery === FALSE && !empty($query["error"]) )
+   {
+      return_error ( $query["error"] . $connection->error ) ;
+   }
 }
 
 $connection->close();
+
 
 //MAKE SURE CONFIG FOLDER PATH IS VALID AND DOES NOT ALREADY EXIST
 $path_parts = explode('/', $config_folder);
@@ -139,10 +110,7 @@ if (!file_exists($config_parent))
 {
 	return_error("Config folder path not valid");
 }
-if (file_exists($config_folder))
-{
-	return_error("Configuration folder already exists at specified location.");
-}
+
 
 //MOVE AND RENAME CONFIG FOLDER
 if (!rename('config', $config_folder))
@@ -169,9 +137,7 @@ rename('index.php', 'index_old.php');
 rename('index_actual.php', 'index.php');
 
 $progress .= "Setup complete!<br>";
-
 $progress .= "<script>location.href = 'index.php?setup_success_dialog=true';</script>";
-
 echo $progress;
 
 function return_error($error)
