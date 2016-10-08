@@ -498,24 +498,24 @@ function initializeMaps() {
 </div>
 
 <?php
-if (isset($_GET['setup_success_dialog'])){
-	echo "<div class=\"flex_container_dialog_float\" id=\"success_dialog\">\n";
-	echo "<div class=\"setup_centered\">\n";
-	echo "<div class=\"settings_group\">\n";
-	echo "<h3>Setup Complete!</h3>\n";
-	echo "<p>The site is now be ready to receive submissions.</p>\n";
-	echo "<p>To change site settings and approve user submissions,
-		point your browser at the <a href=\"/admin\">/admin</a> directory
-		and log in with the credentials created during setup.</p>";
-	echo "<p>Happy reporting!</p>\n";
-	echo "</div>\n";
-	echo "<div class=\"settings_group\">\n";
-	echo "<form>\n";
-	echo "<input class=\"bold_button\" type=\"button\" id=\"dismiss_success_dialog\" value=\"DISMISS\"/>\n";
-	echo "</form>\n";
-	echo "</div>\n";
-	echo "</div>\n";
-	echo "</div>\n";
+if (isset($_GET['setup_success_dialog']))
+{
+	?>
+	<div class="flex_container_dialog_float" id="success_dialog">
+		<div class="setup_centered">
+			<div class="settings_group">
+				<h3>Setup Complete!</h3>
+				<p>The site is now be ready to receive submissions.</p>
+				<p>To change site settings and approve user submissions, point your browser at the <a href="admin/">dmin</a> directory and log in with the credentials created during setup.</p>
+				<p>Happy reporting!</p>
+			</div>
+			<div class="settings_group">
+				<form>
+					<input class="bold_button" type="button" id="dismiss_success_dialog" value="DISMISS"/>
+				</form>
+			</div>
+		</div>
+	</div><?php 
 }
 ?>
 
