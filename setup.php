@@ -67,7 +67,7 @@ $queries = array(
    array(
       "query"   => "DROP  TABLE IF EXISTS cibl_users ;"),
    array(
-      "query"   => "CREATE TABLE cibl_users ( username CHAR(30) NOT NULL, hash CHAR(60) NOT NULL, admin BOOLEAN NOT NULL, submit_notify BOOLEAN NOT NULL, email CHAR(255) ) ; ",
+      "query"   => "CREATE TABLE cibl_users ( username CHAR(30) NOT NULL, hash CHAR(255) NOT NULL, admin BOOLEAN NOT NULL, submit_notify BOOLEAN NOT NULL, email CHAR(255) ) ; ",
       "success" => "Logins table populated successfully.",
       "error"   => "MySQL error populating database : "),
    array(
