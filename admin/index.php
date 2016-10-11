@@ -1,4 +1,7 @@
-<?php require 'auth.php'; ?>
+<?php 
+// Make sure the admin is logged in
+require 'auth.php'; 
+?>
 
 <html>
 <head>
@@ -45,8 +48,10 @@ require('config_pointer.php');
 $success_string = '';
 $error_string = '';
 
-if (isset($_POST['save'])) {
-	try {
+if (isset($_POST['save'])) 
+{
+	try 
+	{
 		//MOVE SUBMISSION TO MAIN TABLE, DELETE QUEUE SUBMISSION, UPDATE IMAGE NAMES AND URLS
 		$connection->begin_transaction();
 		$connection->query(
@@ -83,14 +88,6 @@ if (isset($_POST['save'])) {
 			$imagick->writeImage($_SERVER['DOCUMENT_ROOT'] . '/images/' . $new_url);
 			$imagick->scaleImage(200, 200, true);
 			$imagick->writeImage($_SERVER['DOCUMENT_ROOT'] . '/thumbs/' . $new_url);
-			
-			/*$image_large = imagecreatefromjpeg( '../images/' . $new_url );
-			$rotated_image_large = imagerotate( $image_large , -$_POST['rotate'], 0 );
-			$file1 = imagejpeg($rotated_image_large, '../images/' . $new_url);
-			imagedestroy($image_large);
-			imagedestroy($rotated_image_large);
-			$rotated_image_small = resize_image('../images/' . $new_url, 200, 200);
-			$file2 = imagejpeg($rotated_image_small, '../thumbs/' . $new_url);*/
 		}
 		$success_string = "Submission #" . $_POST['id'] . " has been saved to the map.";
 	}
@@ -100,7 +97,8 @@ if (isset($_POST['save'])) {
 	}
 }
 
-if (isset($_POST['delete'])){
+if (isset($_POST['delete']))
+{
 	$url = mysqli_fetch_array($connection->query('SELECT url FROM cibl_queue WHERE increment = ' . $_POST['id']))[0];
 	if ($url){
 		$result = $connection->query('DELETE FROM cibl_queue WHERE increment=' . $_POST['id']);
@@ -189,7 +187,8 @@ else if($total_entries == 0){ $last_entry = 0; }
 
 <?php
 $count = 0;
-while ($count < count($entries)){
+while ($count < count($entries))
+{
 
 	//BEGIN MOD QUEUE ROW
 	echo "\n\n <div class='moderation_queue_row' id='moderation_queue_row" . $entries[$count][0] . "'>";
@@ -358,401 +357,401 @@ function resize_image($file, $w, $h, $crop=FALSE) {
 </body>
 
 <script type="text/javascript">
-var per_page = <?php echo $per_page; ?>;
-var first_entry = <?php echo $first_entry; ?>;
-var last_entry = <?php echo $last_entry; ?>;
-var total_entries = <?php echo $total_entries; ?>;
-var currentEntry;
-var currentID;
-var zoomToggles = new Map();
-var rotations = new Map();
-var entries = new Map();
+	var per_page = <?php echo $per_page; ?>;
+	var first_entry = <?php echo $first_entry; ?>;
+	var last_entry = <?php echo $last_entry; ?>;
+	var total_entries = <?php echo $total_entries; ?>;
+	var currentEntry;
+	var currentID;
+	var zoomToggles = new Map();
+	var rotations = new Map();
+	var entries = new Map();
 
-function beginning(){ window.location = "edit.php?per_page=" + $('#per_page').val(); }
+	function beginning(){ window.location = "edit.php?per_page=" + $('#per_page').val(); }
 
-function back(){ window.location = "edit.php?per_page=" + $('#per_page').val() + "&go_to_entry=" + (first_entry - $('#per_page').val()); }
+	function back(){ window.location = "edit.php?per_page=" + $('#per_page').val() + "&go_to_entry=" + (first_entry - $('#per_page').val()); }
 
-function forward(){ window.location.href = "edit.php?per_page=" + $('#per_page').val() + "&go_to_entry=" + (last_entry + 1); }
+	function forward(){ window.location.href = "edit.php?per_page=" + $('#per_page').val() + "&go_to_entry=" + (last_entry + 1); }
 
-function end(){ window.location = "edit.php?per_page=" + $('#per_page').val() + "&go_to_entry=" + (total_entries - per_page + 1); }
+	function end(){ window.location = "edit.php?per_page=" + $('#per_page').val() + "&go_to_entry=" + (total_entries - per_page + 1); }
 
-//ARM (ENABLE) A DELETE BUTTON FOR ENTRY DELETION
-function armForDelete(id){
-	new_current_entry(id, false);
-	$("#delete" + id).prop('disabled', function(i, v) {
-		if (v){ $("#delete" + id).removeClass('disabled') }
-		else { $("#delete" + id).addClass('disabled'); }
-		return !v;
-	});
-}
+	//ARM (ENABLE) A DELETE BUTTON FOR ENTRY DELETION
+	function armForDelete(id){
+		new_current_entry(id, false);
+		$("#delete" + id).prop('disabled', function(i, v) {
+			if (v){ $("#delete" + id).removeClass('disabled') }
+			else { $("#delete" + id).addClass('disabled'); }
+			return !v;
+		});
+	}
 
-function edit_plate(id){
-	new_current_entry(id);
-	if ( currentID != "plate" + id ) {
-		currentID = "plate" + id;
-		$("#plate" + id).html("<input id='input_plate" + id + "' class='plate " + currentEntry.state + "' style='width:146px'/>");
-		$("#input_plate" + id).val(currentEntry.plate);
-		$("#input_plate" + id).focus();
-		var plateListener = function(e){
-			if (e.target.className != 'plate ' + currentEntry.state){
-				document.removeEventListener('click', plateListener, true);
-				currentEntry.plate = $("#input_plate" + id).val();
-				if (currentEntry.state == "NYPD" && currentEntry.plate.length > 4){
-					var bigText = currentEntry.plate.slice(0,4);
-					var smallText = currentEntry.plate.slice(4,999);
-					$("#plate" + id).html("<div class='plate " + currentEntry.state + "'>" + bigText + "<span class='NYPDsuffix'>" + smallText + "</span></div></div>");
+	function edit_plate(id){
+		new_current_entry(id);
+		if ( currentID != "plate" + id ) {
+			currentID = "plate" + id;
+			$("#plate" + id).html("<input id='input_plate" + id + "' class='plate " + currentEntry.state + "' style='width:146px'/>");
+			$("#input_plate" + id).val(currentEntry.plate);
+			$("#input_plate" + id).focus();
+			var plateListener = function(e){
+				if (e.target.className != 'plate ' + currentEntry.state){
+					document.removeEventListener('click', plateListener, true);
+					currentEntry.plate = $("#input_plate" + id).val();
+					if (currentEntry.state == "NYPD" && currentEntry.plate.length > 4){
+						var bigText = currentEntry.plate.slice(0,4);
+						var smallText = currentEntry.plate.slice(4,999);
+						$("#plate" + id).html("<div class='plate " + currentEntry.state + "'>" + bigText + "<span class='NYPDsuffix'>" + smallText + "</span></div></div>");
+					}
+					else { $("#plate" + id).html("<div class='plate " + currentEntry.state + "'>" + currentEntry.plate + "</div></div>"); }
+					$("#plate_" + id).val(currentEntry.plate);
+						setTimeout( function(){
+							currentID = "";
+						}, 250);
 				}
-				else { $("#plate" + id).html("<div class='plate " + currentEntry.state + "'>" + currentEntry.plate + "</div></div>"); }
-				$("#plate_" + id).val(currentEntry.plate);
+			}
+			document.addEventListener('click', plateListener, true);
+		}
+	}
+
+	function edit_date(id){
+		new_current_entry(id);
+		if ( currentID != "date" + id ) {
+			currentID = "date" + id;
+			$("#date" + id).html("<input id='input_date" + id + "' class='main_font transparent_bg'/>");
+			$("#input_date" + id).datetimepicker({value:currentEntry.date, format:'m/d/Y g:iA'});
+			$("#input_date" + id).focus();
+			$("#input_date" + id).focusout( function(){
+				currentEntry.date = $("#input_date" + id).val();
+				$("#date" + id).html("<span>" + currentEntry.date + "</span>");
+				$("#date_" + id).val(currentEntry.date);
+				setTimeout( function(){
+					currentID = "";
+				}, 250);
+			});
+		}
+	}
+
+	function edit_streets(id){
+		new_current_entry(id);
+		if ( currentID != "streets" + id ) {
+			currentID = "streets" + id;
+			$("#streets" + id).html("<input id='input_street1-" + id + "' class='main_font' style='width:100px'/> & <input id='input_street2-" + id + "' class='main_font' style='width:100px'/>");
+			$("#input_street1-" + id).val(currentEntry.street1);
+			$("#input_street2-" + id).val(currentEntry.street2);
+			$("#input_street1-" + id).focus();
+
+			var streetsListener = function(e){
+				//var focus = document.activeElement.id;
+				if(e.target.id != 'input_street1-' + id && e.target.id != 'input_street2-' + id && e.target.id != 'streets' + id ){
+					document.removeEventListener('click', streetsListener, true);
+					currentEntry.street1 = $("#input_street1-" + id).val().toUpperCase();
+					currentEntry.street2 = $("#input_street2-" + id).val().toUpperCase();
+					var newContents = "<span>" + currentEntry.street1;
+					if (currentEntry.street2 != 0 && currentEntry.street2 != ""){ newContents+= " & " + currentEntry.street2; }
+					newContents += "</span>";
+					$("#streets" + id).html(newContents);
+					$("#street1_" + id).val(currentEntry.street1);
+					$("#street2_" + id).val(currentEntry.street2);
 					setTimeout( function(){
 						currentID = "";
 					}, 250);
+				}
 			}
-		}
-		document.addEventListener('click', plateListener, true);
-	}
-}
 
-function edit_date(id){
-	new_current_entry(id);
-	if ( currentID != "date" + id ) {
-		currentID = "date" + id;
-		$("#date" + id).html("<input id='input_date" + id + "' class='main_font transparent_bg'/>");
-		$("#input_date" + id).datetimepicker({value:currentEntry.date, format:'m/d/Y g:iA'});
-		$("#input_date" + id).focus();
-		$("#input_date" + id).focusout( function(){
-			currentEntry.date = $("#input_date" + id).val();
-			$("#date" + id).html("<span>" + currentEntry.date + "</span>");
-			$("#date_" + id).val(currentEntry.date);
+			document.addEventListener('click', streetsListener, true);
+		}
+	}
+
+	function edit_gps(id){
+		new_current_entry(id);
+		if ( currentID != "gps" + id ) {
+			currentID = "gps" + id;
+			$("#gps_map_container_" + id).show();
+			initializeMaps(id);
+			var gpsListener = function(e){
+				if(e.target.className != 'leaflet-tile leaflet-tile-loaded'){
+					document.removeEventListener('click', gpsListener, true);
+					gps_map.remove();
+					$("#gps_map_container_" + id).hide();
+					setTimeout( function(){
+						currentID = "";
+					}, 250);
+				}
+			}
+			document.addEventListener('click', gpsListener, true);
+		}
+	}
+
+	function edit_comment(id){
+		new_current_entry(id);
+		if ( currentID != "comment" + id ) {
+			currentID = "comment" + id;
+			$("#comment" + id).html("<textarea id='textarea_comment" + id + "' class='main_font transparent_bg' style='width:100%' value=''></textarea>");
+			$("#textarea_comment" + id).val(currentEntry.comment);
+			$("#textarea_comment" + id).focus();
+			var commentListener = function(e){
+				if(e.target.id != 'textarea_comment' + id && e.target.id != 'comment' + id){
+					document.removeEventListener('click', commentListener, true);
+					currentEntry.comment = $("#textarea_comment" + id).val();
+					$("#comment" + id).html("<span>" + currentEntry.comment + "</span>");
+					$("#comment_" + id).val(currentEntry.comment);
+					setTimeout( function(){
+						currentID = "";
+					}, 250);
+				}
+			};
+			document.addEventListener('click', commentListener, true);
+		}
+	}
+
+	function new_current_entry(id, enableUpdate = true){
+		if (currentEntry == null){
+			currentEntry = new Entry(0,0,0,0,0,0,0,0,0,0);
+		}
+		//Reset any unsaved edits on other entries
+		if (currentEntry.id != 0 && currentEntry.id != id ){
+			$('#moderation_queue_row' + currentEntry.id).css('border', 'none');
+			$("#save" + currentEntry.id).prop('disabled', true);
+			$("#save" + currentEntry.id).addClass("disabled");
+			$("#delete" + currentEntry.id).prop('disabled', true);
+			$("#delete" + currentEntry.id).addClass("disabled");
+			$("#checkbox" + currentEntry.id).prop('checked', false);
+
+			$("#id_" + currentEntry.id).val(backupEntry.id);
+			$("#url_" + currentEntry.id).val(backupEntry.url);
+			$("#plate_" + currentEntry.id).val(backupEntry.plate);
+			$("#state_" + currentEntry.id).val(backupEntry.state);
+			$("#date_" + currentEntry.id).val(backupEntry.date);
+			$("#lat_" + currentEntry.id).val(backupEntry.lat);
+			$("#lon_" + currentEntry.id).val(backupEntry.lon);
+			$("#street1_" + currentEntry.id).val(backupEntry.street1);
+			$("#street2_" + currentEntry.id).val(backupEntry.street2);
+			$("#comment_" + currentEntry.id).val(backupEntry.comment);
+
+			var newHtml = "<img class='review' id='img" + backupEntry.id + "' src=\"" + "../thumbs/" + backupEntry.url + "\" onclick=\"javascript:toggleImg('" + backupEntry.url + "'," + backupEntry.id + ");\" />";
+			$("#" + backupEntry.id).empty();
+			$("#" + backupEntry.id).html(newHtml);
+			zoomToggles.set(backupEntry.id * 1, false);
+			rotations.set((backupEntry.id * 1), 0);
+			$("#img" + backupEntry.id).css('transform', 'rotate(0deg)');
+			var savedID = backupEntry.id;
 			setTimeout( function(){
-				currentID = "";
-			}, 250);
-		});
-	}
-}
+				var bounds = document.getElementById("img" + savedID).getBoundingClientRect();
+				document.getElementById(savedID).style.width = bounds.width;
+				document.getElementById(savedID).style.height = (bounds.height >= 200) ? bounds.height : 200;;
+			}, 10);
 
-function edit_streets(id){
-	new_current_entry(id);
-	if ( currentID != "streets" + id ) {
-		currentID = "streets" + id;
-		$("#streets" + id).html("<input id='input_street1-" + id + "' class='main_font' style='width:100px'/> & <input id='input_street2-" + id + "' class='main_font' style='width:100px'/>");
-		$("#input_street1-" + id).val(currentEntry.street1);
-		$("#input_street2-" + id).val(currentEntry.street2);
-		$("#input_street1-" + id).focus();
-
-		var streetsListener = function(e){
-			//var focus = document.activeElement.id;
-			if(e.target.id != 'input_street1-' + id && e.target.id != 'input_street2-' + id && e.target.id != 'streets' + id ){
-				document.removeEventListener('click', streetsListener, true);
-				currentEntry.street1 = $("#input_street1-" + id).val().toUpperCase();
-				currentEntry.street2 = $("#input_street2-" + id).val().toUpperCase();
-				var newContents = "<span>" + currentEntry.street1;
-				if (currentEntry.street2 != 0 && currentEntry.street2 != ""){ newContents+= " & " + currentEntry.street2; }
-				newContents += "</span>";
-				$("#streets" + id).html(newContents);
-				$("#street1_" + id).val(currentEntry.street1);
-				$("#street2_" + id).val(currentEntry.street2);
-				setTimeout( function(){
-					currentID = "";
-				}, 250);
+			if (backupEntry.state == "NYPD" && backupEntry.plate.length > 4){
+				var bigText = backupEntry.plate.slice(0,4);
+				var smallText = backupEntry.plate.slice(4,999);
+				$("#plate" + backupEntry.id).html("<div class='plate " + backupEntry.state + "'>" + bigText + "<span class='NYPDsuffix'>" + smallText + "</span></div></div>");
 			}
+			else { $("#plate" + backupEntry.id).html("<div class='plate " + backupEntry.state + "'>" + backupEntry.plate + "</div></div>"); }
+
+			$("#date" + backupEntry.id).html("<span>" + backupEntry.date + "</span>");
+
+			var oldStreets = "<span>" + backupEntry.street1;
+			if (backupEntry.street2 != 0 && backupEntry.street2 != ""){ oldStreets+= " & " + backupEntry.street2; }
+			oldStreets += "</span>";
+			$("#streets" + backupEntry.id).html(oldStreets);
+
+			var old_gps_text = "<span>" + backupEntry.lat + " / " + backupEntry.lon + "</span>";
+			$("#gps" + backupEntry.id).html(old_gps_text);
+
+			$("#comment" + backupEntry.id).html("<span>" + backupEntry.comment + "</span>");
 		}
-
-		document.addEventListener('click', streetsListener, true);
+		//If method wasn't called from the delete checkbox, enable saving / updating
+		if (enableUpdate == true){
+			$("#save" + id).prop('disabled', false);
+			$("#save" + id).removeClass("disabled");
+		}
+		//New entry setup
+		if (currentEntry.id != id){
+			currentEntry = new Entry(
+				$("#id_" + id).val(),
+				$("#url_" + id).val(),
+				$("#plate_" + id).val(),
+				$("#state_" + id).val(),
+				$("#date_" + id).val(),
+				$("#lat_" + id).val(),
+				$("#lon_" + id).val(),
+				$("#street1_" + id).val(),
+				$("#street2_" + id).val(),
+				$("#comment_" + id).val()
+			);
+			backupEntry = new Entry(
+				currentEntry.id,
+				currentEntry.url,
+				currentEntry.plate,
+				currentEntry.state,
+				currentEntry.date,
+				currentEntry.lat,
+				currentEntry.lon,
+				currentEntry.street1.toUpperCase(),
+				currentEntry.street2.toUpperCase(),
+				currentEntry.comment
+			);
+			$('#moderation_queue_row' + id).css('border', '3px dashed gray');
+			return true;
+		}
+		else { return false; }
 	}
-}
 
-function edit_gps(id){
-	new_current_entry(id);
-	if ( currentID != "gps" + id ) {
-		currentID = "gps" + id;
-		$("#gps_map_container_" + id).show();
-		initializeMaps(id);
-		var gpsListener = function(e){
-			if(e.target.className != 'leaflet-tile leaflet-tile-loaded'){
-				document.removeEventListener('click', gpsListener, true);
-				gps_map.remove();
-				$("#gps_map_container_" + id).hide();
-				setTimeout( function(){
-					currentID = "";
-				}, 250);
+	function initializeMaps(id) {
+		var divName = "gps_map" + id;
+		if (<?php echo $config['use_providers_plugin']; ?>) {
+			gps_map = L.map(divName);
+			try { var tiles = L.tileLayer.provider('<?php echo $config['leaflet_provider']; ?>'); }
+			catch (err) { console.log(err); }
+		}
+		else if (<?php echo $config['use_google']; ?>) {
+			gps_map = L.map(divName);
+			<?php if ($config['use_google']){
+				echo "var options = ";
+				include $config_folder . '/google_style.php';
+				echo ";\n"; }
+			?>
+			var extra = <?php echo "\"" . $config['google_extra_layer'] . "\";\n"; ?>
+			try {
+				var tiles = new L.Google('ROADMAP', {
+						mapOptions: {
+							styles: options
+						}
+					}, extra);
 			}
+			catch (err) { console.log(err); }
 		}
-		document.addEventListener('click', gpsListener, true);
-	}
-}
-
-function edit_comment(id){
-	new_current_entry(id);
-	if ( currentID != "comment" + id ) {
-		currentID = "comment" + id;
-		$("#comment" + id).html("<textarea id='textarea_comment" + id + "' class='main_font transparent_bg' style='width:100%' value=''></textarea>");
-		$("#textarea_comment" + id).val(currentEntry.comment);
-		$("#textarea_comment" + id).focus();
-		var commentListener = function(e){
-			if(e.target.id != 'textarea_comment' + id && e.target.id != 'comment' + id){
-				document.removeEventListener('click', commentListener, true);
-				currentEntry.comment = $("#textarea_comment" + id).val();
-				$("#comment" + id).html("<span>" + currentEntry.comment + "</span>");
-				$("#comment_" + id).val(currentEntry.comment);
-				setTimeout( function(){
-					currentID = "";
-				}, 250);
-			}
-		};
-		document.addEventListener('click', commentListener, true);
-	}
-}
-
-function new_current_entry(id, enableUpdate = true){
-	if (currentEntry == null){
-		currentEntry = new Entry(0,0,0,0,0,0,0,0,0,0);
-	}
-	//Reset any unsaved edits on other entries
-	if (currentEntry.id != 0 && currentEntry.id != id ){
-		$('#moderation_queue_row' + currentEntry.id).css('border', 'none');
-		$("#save" + currentEntry.id).prop('disabled', true);
-		$("#save" + currentEntry.id).addClass("disabled");
-		$("#delete" + currentEntry.id).prop('disabled', true);
-		$("#delete" + currentEntry.id).addClass("disabled");
-		$("#checkbox" + currentEntry.id).prop('checked', false);
-
-		$("#id_" + currentEntry.id).val(backupEntry.id);
-		$("#url_" + currentEntry.id).val(backupEntry.url);
-		$("#plate_" + currentEntry.id).val(backupEntry.plate);
-		$("#state_" + currentEntry.id).val(backupEntry.state);
-		$("#date_" + currentEntry.id).val(backupEntry.date);
-		$("#lat_" + currentEntry.id).val(backupEntry.lat);
-		$("#lon_" + currentEntry.id).val(backupEntry.lon);
-		$("#street1_" + currentEntry.id).val(backupEntry.street1);
-		$("#street2_" + currentEntry.id).val(backupEntry.street2);
-		$("#comment_" + currentEntry.id).val(backupEntry.comment);
-
-		var newHtml = "<img class='review' id='img" + backupEntry.id + "' src=\"" + "../thumbs/" + backupEntry.url + "\" onclick=\"javascript:toggleImg('" + backupEntry.url + "'," + backupEntry.id + ");\" />";
-		$("#" + backupEntry.id).empty();
-		$("#" + backupEntry.id).html(newHtml);
-		zoomToggles.set(backupEntry.id * 1, false);
-		rotations.set((backupEntry.id * 1), 0);
-		$("#img" + backupEntry.id).css('transform', 'rotate(0deg)');
-		var savedID = backupEntry.id;
-		setTimeout( function(){
-			var bounds = document.getElementById("img" + savedID).getBoundingClientRect();
-			document.getElementById(savedID).style.width = bounds.width;
-			document.getElementById(savedID).style.height = (bounds.height >= 200) ? bounds.height : 200;;
-		}, 10);
-
-		if (backupEntry.state == "NYPD" && backupEntry.plate.length > 4){
-			var bigText = backupEntry.plate.slice(0,4);
-			var smallText = backupEntry.plate.slice(4,999);
-			$("#plate" + backupEntry.id).html("<div class='plate " + backupEntry.state + "'>" + bigText + "<span class='NYPDsuffix'>" + smallText + "</span></div></div>");
+		else if (<?php echo $config['use_bing']; ?>) {
+			gps_map = L.map(divName);
+			imagerySet = '<?php echo $config['bing_imagery']; ?>';
+			bingApiKey = '<?php echo $config['bing_api_key']; ?>';
+			try { var tiles = new L.BingLayer(bingApiKey, {type: imagerySet}); }
+			catch (err) { console.log(err); }
 		}
-		else { $("#plate" + backupEntry.id).html("<div class='plate " + backupEntry.state + "'>" + backupEntry.plate + "</div></div>"); }
-
-		$("#date" + backupEntry.id).html("<span>" + backupEntry.date + "</span>");
-
-		var oldStreets = "<span>" + backupEntry.street1;
-		if (backupEntry.street2 != 0 && backupEntry.street2 != ""){ oldStreets+= " & " + backupEntry.street2; }
-		oldStreets += "</span>";
-		$("#streets" + backupEntry.id).html(oldStreets);
-
-		var old_gps_text = "<span>" + backupEntry.lat + " / " + backupEntry.lon + "</span>";
-		$("#gps" + backupEntry.id).html(old_gps_text);
-
-		$("#comment" + backupEntry.id).html("<span>" + backupEntry.comment + "</span>");
-	}
-	//If method wasn't called from the delete checkbox, enable saving / updating
-	if (enableUpdate == true){
-		$("#save" + id).prop('disabled', false);
-		$("#save" + id).removeClass("disabled");
-	}
-	//New entry setup
-	if (currentEntry.id != id){
-		currentEntry = new Entry(
-			$("#id_" + id).val(),
-			$("#url_" + id).val(),
-			$("#plate_" + id).val(),
-			$("#state_" + id).val(),
-			$("#date_" + id).val(),
-			$("#lat_" + id).val(),
-			$("#lon_" + id).val(),
-			$("#street1_" + id).val(),
-			$("#street2_" + id).val(),
-			$("#comment_" + id).val()
-		);
-		backupEntry = new Entry(
-			currentEntry.id,
-			currentEntry.url,
-			currentEntry.plate,
-			currentEntry.state,
-			currentEntry.date,
-			currentEntry.lat,
-			currentEntry.lon,
-			currentEntry.street1.toUpperCase(),
-			currentEntry.street2.toUpperCase(),
-			currentEntry.comment
-		);
-		$('#moderation_queue_row' + id).css('border', '3px dashed gray');
-		return true;
-	}
-	else { return false; }
-}
-
-function initializeMaps(id) {
-	var divName = "gps_map" + id;
-	if (<?php echo $config['use_providers_plugin']; ?>) {
-		gps_map = L.map(divName);
-		try { var tiles = L.tileLayer.provider('<?php echo $config['leaflet_provider']; ?>'); }
-		catch (err) { console.log(err); }
-	}
-	else if (<?php echo $config['use_google']; ?>) {
-		gps_map = L.map(divName);
-		<?php if ($config['use_google']){
-			echo "var options = ";
-			include $config_folder . '/google_style.php';
-			echo ";\n"; }
-		?>
-		var extra = <?php echo "\"" . $config['google_extra_layer'] . "\";\n"; ?>
-		try {
-			var tiles = new L.Google('ROADMAP', {
-					mapOptions: {
-						styles: options
-					}
-				}, extra);
+		else {
+			gps_map = L.map(divName);
+			try { var tiles = L.tileLayer('<?php echo $config['map_url']; ?>'); }
+			catch (err) { console.log(err); }
 		}
-		catch (err) { console.log(err); }
-	}
-	else if (<?php echo $config['use_bing']; ?>) {
-		gps_map = L.map(divName);
-		imagerySet = '<?php echo $config['bing_imagery']; ?>';
-		bingApiKey = '<?php echo $config['bing_api_key']; ?>';
-		try { var tiles = new L.BingLayer(bingApiKey, {type: imagerySet}); }
-		catch (err) { console.log(err); }
-	}
-	else {
-		gps_map = L.map(divName);
-		try { var tiles = L.tileLayer('<?php echo $config['map_url']; ?>'); }
-		catch (err) { console.log(err); }
-	}
 
-	gps_map.addLayer(tiles);
-	gps_map.setView([currentEntry.lat, currentEntry.lon], 12);
+		gps_map.addLayer(tiles);
+		gps_map.setView([currentEntry.lat, currentEntry.lon], 12);
 
-	markers = L.layerGroup().addTo(gps_map);
-	marker = new L.marker([currentEntry.lat, currentEntry.lon]).addTo(markers);
-
-	gps_map.on('click', function(e){
-		gps_map.removeLayer(markers);
 		markers = L.layerGroup().addTo(gps_map);
-		marker = new L.marker(e.latlng).addTo(markers);
-		var gps_text = "<span>" + e.latlng.lat.toFixed(6) + " / " + e.latlng.lng.toFixed(6) + "</span>";
-		$("#gps" + id).html(gps_text);
-		currentEntry.lat = e.latlng.lat.toFixed(6)
-		currentEntry.lon = e.latlng.lng.toFixed(6)
-		$("#lat_" + id).val(e.latlng.lat.toFixed(6));
-		$("#lon_" + id).val(e.latlng.lng.toFixed(6));
+		marker = new L.marker([currentEntry.lat, currentEntry.lon]).addTo(markers);
+
+		gps_map.on('click', function(e){
+			gps_map.removeLayer(markers);
+			markers = L.layerGroup().addTo(gps_map);
+			marker = new L.marker(e.latlng).addTo(markers);
+			var gps_text = "<span>" + e.latlng.lat.toFixed(6) + " / " + e.latlng.lng.toFixed(6) + "</span>";
+			$("#gps" + id).html(gps_text);
+			currentEntry.lat = e.latlng.lat.toFixed(6)
+			currentEntry.lon = e.latlng.lng.toFixed(6)
+			$("#lat_" + id).val(e.latlng.lat.toFixed(6));
+			$("#lon_" + id).val(e.latlng.lng.toFixed(6));
+		});
+	}
+
+	function toggleImg(link,id) {
+		if (zoomToggles.has(id) && (zoomToggles.get(id))){
+			var newHtml = "<img class='review' id='img" + id + "' src=\"../thumbs/" + link +
+			"\" onclick=\"javascript:toggleImg('" + link + "'," + id + ")\" style='transform:rotate(" + rotations.get(id) + "deg)' />";
+			$("#" + id).empty();
+			$("#" + id).html(newHtml);
+			$('#img' + id).on('load', function() {
+				update_img_container_size(id);
+			});
+			zoomToggles.set(id, false);
+		}
+		else {
+			var newHtml = "<img class='review' id='img" + id + "' src=\"../images/" + link +
+			"\" onclick=\"javascript:toggleImg('" + link + "'," + id + ")\" style='transform:rotate(" + rotations.get(id) + "deg)' />";
+			$("#" + id).empty();
+			$("#" + id).html(newHtml);
+			$('#img' + id).on('load', function() {
+				update_img_container_size(id);
+			});
+			zoomToggles.set(id, true);
+		}
+	}
+
+	function rotate(angle, id){
+		new_current_entry(id);
+		var rotation = 0;
+		if (rotations.has(id)){ rotation = rotations.get(id); }
+		rotation += angle;
+		if (rotation >= 360) { rotation -= 360; }
+		if (rotation < 0) { rotation += 360; }
+		rotations.set(id,rotation);
+		$("#img" + id).css("transform", "rotate(" + rotations.get(id) + "deg)");
+		update_img_container_size(id);
+	}
+
+	function update_img_container_size(id){
+		var imgWidth = $('#img' + id).width();
+		var imgHeight = $('#img' + id).height();
+		if (rotations.get(id) == null || rotations.get(id) == 0 || rotations.get(id) == 180)
+		{ $('#' + id).width(imgWidth); $('#' + id).height(imgHeight); }
+		else
+		{ $('#' + id).width(imgHeight); $('#' + id).height(imgWidth); }
+	}
+
+	function accept(id){
+		new_current_entry(id);
+		var form = $(
+		'<form action="index.php" method="post" style="display:none">' +
+		'<input type="hidden" name="save" value="true" />' +
+		'<input type="hidden" name="id" value="' + currentEntry.id + '" />' +
+		'<input type="hidden" name="url" value="' + currentEntry.url + '" />' +
+		'<input type="hidden" name="plate" value="' + currentEntry.plate + '" />' +
+		'<input type="hidden" name="state" value="' + currentEntry.state + '" />' +
+		'<input type="hidden" name="date" value="' + currentEntry.date + '" />' +
+		'<input type="hidden" name="street1" value="' + htmlEntities(currentEntry.street1) + '" />' +
+		'<input type="hidden" name="street2" value="' + htmlEntities(currentEntry.street2) + '" />' +
+		'<input type="hidden" name="lat" value="' + currentEntry.lat + '" />' +
+		'<input type="hidden" name="lon" value="' + currentEntry.lon + '" />' +
+		'<input type="hidden" name="comment" value="' + htmlEntities(currentEntry.comment) + '" />' +
+		'<input type="hidden" name="rotate" value="' + rotations.get(currentEntry.id * 1) + '" />' +
+		'</form>');
+		$('body').append(form);
+		form.submit();
+	}
+
+	function htmlEntities(str) {
+	    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+	}
+
+	function remove(id){
+		var form = $(
+		'<form action="index.php" method="post" style="display:none">' +
+		'<input type="hidden" name="delete" value="true" />' +
+		'<input type="hidden" name="id" value="' + currentEntry.id + '" />' +
+		'</form>');
+		$('body').append(form);
+		form.submit();
+	}
+
+	class Entry {
+		constructor(id, url, plate, state, date, lat, lon, street1, street2, comment) {
+	 		this.id = id;
+			this.url = url;
+	 		this.plate = plate;
+			this.state = state;
+			this.date = date;
+	 		this.lat = lat;
+	 		this.lon = lon;
+	 		this.street1 = street1;
+	 		this.street2 = street2;
+	 		this.comment = comment;
+	 	}
+	}
+
+	$(document).ready( function() {
+		$(".disabled").prop('disabled', true);
+		if (total_entries == 0){
+			$('.list_nav').hide();
+		}
 	});
-}
-
-function toggleImg(link,id) {
-	if (zoomToggles.has(id) && (zoomToggles.get(id))){
-		var newHtml = "<img class='review' id='img" + id + "' src=\"../thumbs/" + link +
-		"\" onclick=\"javascript:toggleImg('" + link + "'," + id + ")\" style='transform:rotate(" + rotations.get(id) + "deg)' />";
-		$("#" + id).empty();
-		$("#" + id).html(newHtml);
-		$('#img' + id).on('load', function() {
-			update_img_container_size(id);
-		});
-		zoomToggles.set(id, false);
-	}
-	else {
-		var newHtml = "<img class='review' id='img" + id + "' src=\"../images/" + link +
-		"\" onclick=\"javascript:toggleImg('" + link + "'," + id + ")\" style='transform:rotate(" + rotations.get(id) + "deg)' />";
-		$("#" + id).empty();
-		$("#" + id).html(newHtml);
-		$('#img' + id).on('load', function() {
-			update_img_container_size(id);
-		});
-		zoomToggles.set(id, true);
-	}
-}
-
-function rotate(angle, id){
-	new_current_entry(id);
-	var rotation = 0;
-	if (rotations.has(id)){ rotation = rotations.get(id); }
-	rotation += angle;
-	if (rotation >= 360) { rotation -= 360; }
-	if (rotation < 0) { rotation += 360; }
-	rotations.set(id,rotation);
-	$("#img" + id).css("transform", "rotate(" + rotations.get(id) + "deg)");
-	update_img_container_size(id);
-}
-
-function update_img_container_size(id){
-	var imgWidth = $('#img' + id).width();
-	var imgHeight = $('#img' + id).height();
-	if (rotations.get(id) == null || rotations.get(id) == 0 || rotations.get(id) == 180)
-	{ $('#' + id).width(imgWidth); $('#' + id).height(imgHeight); }
-	else
-	{ $('#' + id).width(imgHeight); $('#' + id).height(imgWidth); }
-}
-
-function accept(id){
-	new_current_entry(id);
-	var form = $(
-	'<form action="index.php" method="post" style="display:none">' +
-	'<input type="hidden" name="save" value="true" />' +
-	'<input type="hidden" name="id" value="' + currentEntry.id + '" />' +
-	'<input type="hidden" name="url" value="' + currentEntry.url + '" />' +
-	'<input type="hidden" name="plate" value="' + currentEntry.plate + '" />' +
-	'<input type="hidden" name="state" value="' + currentEntry.state + '" />' +
-	'<input type="hidden" name="date" value="' + currentEntry.date + '" />' +
-	'<input type="hidden" name="street1" value="' + htmlEntities(currentEntry.street1) + '" />' +
-	'<input type="hidden" name="street2" value="' + htmlEntities(currentEntry.street2) + '" />' +
-	'<input type="hidden" name="lat" value="' + currentEntry.lat + '" />' +
-	'<input type="hidden" name="lon" value="' + currentEntry.lon + '" />' +
-	'<input type="hidden" name="comment" value="' + htmlEntities(currentEntry.comment) + '" />' +
-	'<input type="hidden" name="rotate" value="' + rotations.get(currentEntry.id * 1) + '" />' +
-	'</form>');
-	$('body').append(form);
-	form.submit();
-}
-
-function htmlEntities(str) {
-    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-function remove(id){
-	var form = $(
-	'<form action="index.php" method="post" style="display:none">' +
-	'<input type="hidden" name="delete" value="true" />' +
-	'<input type="hidden" name="id" value="' + currentEntry.id + '" />' +
-	'</form>');
-	$('body').append(form);
-	form.submit();
-}
-
-class Entry {
-	constructor(id, url, plate, state, date, lat, lon, street1, street2, comment) {
- 		this.id = id;
-		this.url = url;
- 		this.plate = plate;
-		this.state = state;
-		this.date = date;
- 		this.lat = lat;
- 		this.lon = lon;
- 		this.street1 = street1;
- 		this.street2 = street2;
- 		this.comment = comment;
- 	}
-}
-
-$(document).ready( function() {
-	$(".disabled").prop('disabled', true);
-	if (total_entries == 0){
-		$('.list_nav').hide();
-	}
-});
 
 </script>
 </html>
