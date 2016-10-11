@@ -1,43 +1,30 @@
 <?php
 
 require 'admin/config_pointer.php';
+$authorizedMimeTypes = array("image/jpeg", "image/gif", "image/png") ; 
 
-//VERIFY ATTACHMENT
-if (empty($_FILES["image_submission"]["tmp_name"])){
+// Make sure there is an attachment
+if (empty($_FILES["image_submission"]["tmp_name"]))
+{
 	error("noimage");
 }
 
-//CHECK IF ATTACHMENT IS AN IMAGE
-if(isset($_POST['upload'])) {
-    $check = getimagesize($_FILES["image_submission"]["tmp_name"]);
-	//error_log($_FILES["image_submission"]["tmp_name"]);
-	//error_log(getimagesize($_FILES["image_submission"]["tmp_name"]));
-    if($check !== false){
-    	$target_extension = pathinfo(basename($_FILES["image_submission"]["name"]), PATHINFO_EXTENSION);
-    	if($target_extension == "jpg" ||
-    		$target_extension == "JPG" ||
-    		$target_extension == "png" ||
-    		$target_extension == "PNG" ||
-    		$target_extension == "jpeg" ||
-    		$target_extension == "JPEG" ||
-    		$target_extension == "gif" ||
-    		$target_extension == "GIF")
-    	{	
-        	//echo "File is good: " . basename($_FILES["image_submission"]["name"]) . " (". $check["mime"] . "). <br>";
-        }
-		else
-		{
-    		error("badimage");
-    	}     
-    } else {
-    	error("badimage");
-    }
+// Check if attachment is an image
+if(isset($_POST['upload'])) 
+{
+   $finfo = finfo_open(FILEINFO_MIME_TYPE);
+   $mimeType = finfo_file($finfo, $_FILES["image_submission"]["tmp_name"]) ;
+   finfo_close($finfo);
+
+   if ( !in_array($mimeType, $authorizedMimeTypes) ) 
+   {
+      error("badimage");
+   }
 }
-//VERIFY COORDINATES WITHIN PROJECT AREA
-if ( $_POST["lat"] > $config['north_bounds'] || 
-	 $_POST["lat"] < $config['south_bounds'] || 
-	 $_POST["lng"] > $config['east_bounds'] || 
-	 $_POST["lng"] < $config['west_bounds'] ){
+
+// Make sure the image posted is in the area of the project
+if ( $_POST["lat"] > $config['north_bounds'] ||  $_POST["lat"] < $config['south_bounds'] || $_POST["lng"] > $config['east_bounds'] ||  $_POST["lng"] < $config['west_bounds'] )
+{
 	$message = "";
 	if ( $_POST["lat"] != '' && $_POST["lat"] > $config['north_bounds'] ){
 		$message .= $_POST["lat"] . " is too far north. ";
@@ -122,14 +109,6 @@ $imagick->writeImage($target_image);
 $imagick->scaleImage(200, 200, true);
 $imagick->writeImage($target_thumb);
 
-//$resized_thumb = resize_image($_FILES["image_submission"]["tmp_name"], 200, 200);
-//$save_thumb = imagejpeg($resized_thumb, $target_thumb, 90);
-//$save_image = move_uploaded_file($_FILES["image_submission"]["tmp_name"], $target_image);
-
-//if ($save_image == false){
-//	error("mysql");
-//}
-
 $submission_details = array(
 	'id' => $target_increment,
 	'plate' => $plate,
@@ -143,69 +122,27 @@ $submission_details = array(
 );
 success($config, $connection, $submission_details);
 
-/*
-//IMAGE RESIZE FUNCTION
-function resize_image($file, $w, $h, $crop=FALSE) {
-    list($width, $height) = getimagesize($file);
-    $r = $width / $height;
-    if ($crop) {
-        if ($width > $height) {
-            $width = ceil($width-($width*abs($r-$w/$h)));
-        } else {
-            $height = ceil($height-($height*abs($r-$w/$h)));
-        }
-        $newwidth = $w;
-        $newheight = $h;
-    } else {
-        if ($w/$h > $r) {
-            $newwidth = $h*$r;
-            $newheight = $h;
-        } else {
-            $newheight = $w/$r;
-            $newwidth = $w;
-        }
-    }
-    $info = getimagesize($file);
-    if ($info['mime'] == 'image/jpeg') 
-		$src = imagecreatefromjpeg($file);
-	elseif ($info['mime'] == 'image/gif') 
-		$src = imagecreatefromgif($file);
-	elseif ($info['mime'] == 'image/png') 
-		$src = imagecreatefrompng($file);
-    
-    $dst = imagecreatetruecolor($newwidth, $newheight);
-    imagecopyresampled($dst, $src, 0, 0, 0, 0, $newwidth, $newheight, $width, $height);
-	
-    return $dst;
-}
-*/
 
-function error($type, $message = '') {
-	echo "\n <div class=\"top_dialog_button\" id=\"close\">";
-	echo "\n <span>&#x2A09</span>";
-	echo "\n </div>";
-	
-	if ($type == "noimage"){
-		echo "\n <h2>Error:</h2>";
-		echo "\n <p class=\"submit_detail\">Submissions without an image attached are currently not accepted.</p>";
-	}
-	if ($type == "badimage"){
-		echo "\n <h2>Error:</h2>";
-		echo "\n <p class=\"submit_detail\">You must submit a JPG, JPEG, GIF or PNG image.</p>";
-	}
-	if ($type == "badlocation"){
-		echo "\n <h2>Error:</h2>";
-		echo "\n <p class=\"submit_detail\">No valid location marked within project area, please mark a valid location on the map.</p>";
-		if ($message != ''){ echo "\n<p class=\"submit_detail\">" . $message . "</p>"; }
-	}
-	if ($type == "mysql"){
-		echo "\n <h2>Error:</h2>";
-		echo "\n <p class=\"submit_detail\">Something is wrong with the server. Maybe try again later?</p>";
-	}
-	if ($type == "plate"){
-		echo "\n <h2>Error:</h2>";
-		echo "\n <p class=\"submit_detail\">License plates must only contain letters and numbers.</p>";
-	}
+function error($type, $message = '') 
+{
+	$errorMessages = array(
+      "noimage"      => "Submissions without an image attached are currently not accepted.",
+      "badimage"     => "You must submit a JPG, JPEG, GIF or PNG image.",
+      "badlocation"  => "No valid location marked within project area, please mark a valid location on the map.",
+      "mysql"        => "Something is wrong with the server. Maybe try again later?",
+      "plate"        => "License plates must only contain letters and numbers." ) ;
+
+   ?>
+   <div class="top_dialog_button" id="close">
+	  <span>&#x2A09</span>
+	</div>
+   <h2>Error:</h2>
+   <?php 
+   echo '<p class="submit_detail">'.$errorMessages[$type].'</p>' ; 
+   if ( $type == "badlocation" && !empty($message) )
+   {
+      echo "<p class=\"submit_detail\">" . $message . "</p>" ;
+   }
 	
 	if ($_POST['source'] == 'desktop'){
 		echo "\n\n<script>";
@@ -220,7 +157,6 @@ function error($type, $message = '') {
 		echo "\n $(document).ready(function() {";
 		echo "\n 	$(\"#close\").click( function() {";
 		echo "\n		open_window('submit_view');";
-		//echo "\n 		$(\"#results_view\").empty();";
 		echo "\n 	});";
 		echo "\n });";
 		echo "\n\n</script>";
